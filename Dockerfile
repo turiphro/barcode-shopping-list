@@ -11,6 +11,8 @@ RUN pip install -r requirements.txt
 
 COPY . /app
 
+RUN chmod +x ./gunicorn_starter.sh
+
 EXPOSE 5000
 
-CMD ["uwsgi", "uwsgi.ini"]
+ENTRYPOINT ["./gunicorn_starter.sh"]
