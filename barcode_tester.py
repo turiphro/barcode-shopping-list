@@ -2,9 +2,9 @@
 import pprint
 
 from src.api.resolvers.albert_heijn import AlbertHeijnResolver
+from src.api.resolvers.commands import CommandResolver
 
-
-resolvers = [AlbertHeijnResolver()]
+resolvers = [AlbertHeijnResolver(), CommandResolver()]
 
 while True:
     barcode = input("> ")
