@@ -17,5 +17,7 @@ class AlbertHeijnResolver(BaseResolver):
         info = self.connector.get_product_by_barcode(barcode)
         print("[OK] AH API returned:", info)
         name = info.get('title')
+        sub_category = info.get('subCategory')  # seems to be product type/name (without brand etc)
+        print(f"[->] name={name}, sub_category={sub_category}")
 
         return self.RESULT_TYPES.PRODUCT.name, name, info

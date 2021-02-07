@@ -32,7 +32,12 @@ def barcode_cli(hostname, port, listname, width):
         click.echo()
         click.echo(click.style(padding(f"=======[[ {listname} ]]===", width, "="), fg="white"))
         for item in list.get("list"):
-            click.echo(click.style(padding(item, width), fg="white"))
+            name = item.get("name")
+            qty = item.get("quantity")
+            click.echo(
+                click.style(f"{qty}x", fg="white") + " " +
+                click.style(padding(name, width - 3), fg="yellow")
+            )
         click.echo(click.style(padding("=", width, "="), fg="white"))
         click.echo()
 
