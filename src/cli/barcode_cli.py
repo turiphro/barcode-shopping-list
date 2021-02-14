@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-from enum import Enum
-
+import json
 import click
 import requests
+from enum import Enum
 
 
 def api_url(hostname, port, path):
@@ -16,7 +16,7 @@ def padding(s: str, width: int, char=' '):
         return s + char * (width - len(s))
 
 
-COMMANDS = Enum("COMMANDS", "ADD REMOVE")
+COMMANDS = Enum("COMMANDS", "ADD REMOVE LIST")
 
 @click.command()
 @click.option('--hostname', default='localhost', help='Hostname of the API')
@@ -41,32 +41,45 @@ def barcode_cli(hostname, port, listname, width):
         click.echo(click.style(padding("=", width, "="), fg="white"))
         click.echo()
 
-        command, payload = process_command_input(hostname, port, listname)
+        command, payload = process_command_input(hostname, port)
 
-        print("SENDING", command, payload)
-        execute_action(command, payload, hostname, port, listname)
+        if command == COMMANDS.LIST.name:
+            listname = payload
+
+        else:
+            print("SENDING", command, payload)
+            execute_action(command, payload, hostname, port, listname)
 
 
-def process_command_input(hostname, port, listname):
+def process_command_input(hostname, port):
     completed = False
     command = COMMANDS.ADD.name
     payload = None
 
     while not completed:
-        barcode_type, barcode_name = get_next_barcode(command, hostname, port, listname)
+        barcode_type, barcode_item = get_next_barcode(command, hostname, port)
 
         # Process barcode
         if barcode_type == "COMMAND":
-            command = barcode_name
+            command = barcode_item["name"]
+
+            if command == COMMANDS.LIST.name:
+                payload = get_next_input(command)
+                completed = True
+
         elif barcode_type == "PRODUCT":
-            payload = {"name": barcode_name}
+            payload = barcode_item
             completed = True
 
     return command, payload
 
 
-def get_next_barcode(command, hostname, port, listname):
-    barcode = click.prompt(click.style(f"[{command}]", fg="blue"))
+def get_next_input(command):
+    return click.prompt(click.style(f"[{command}]", fg="blue"))
+
+
+def get_next_barcode(command, hostname, port):
+    barcode = get_next_input(command)
     response = requests.get(api_url(hostname, port, f"lookup/{barcode}"))
     payload = response.json()
 
@@ -78,16 +91,23 @@ def get_next_barcode(command, hostname, port, listname):
         return None, None
 
     barcode_type = payload.get('type', 'ERROR')
-    barcode_name = payload.get('name')
-    click.echo(click.style(barcode_type, fg="green") + ": " + click.style(barcode_name, fg="yellow", bold=True))
+    barcode_item = {
+        "name": payload.get('name'),
+        "description": payload.get('description'),
+        "info": json.dumps(payload)
+    }
+    click.echo(click.style(barcode_type, fg="green") + ": " + click.style(barcode_item["name"], fg="yellow", bold=True))
 
-    return barcode_type, barcode_name
+    return barcode_type, barcode_item
 
 
 def execute_action(command, payload, hostname, port, listname):
     if command == COMMANDS.ADD.name:
         requests.post(api_url(hostname, port, f"lists/{listname}"), json=payload)
     elif command == COMMANDS.REMOVE.name:
+        name = payload.get('name')
+        requests.delete(api_url(hostname, port, f"lists/{listname}/{name}"))
+    elif command == COMMANDS.LIST.name:
         name = payload.get('name')
         requests.delete(api_url(hostname, port, f"lists/{listname}/{name}"))
     else:
