@@ -1,16 +1,10 @@
 import os
-from csv import DictWriter
-from dataclass_csv import DataclassReader
+from csv import DictReader, DictWriter
 from dataclasses import asdict
 from typing import List
 
 from .storage import Storage
 from models.item import Item
-
-
-STATIC_DATA = {
-    'groc': [Item(name='kattenzand'), Item(name='brokjes'), Item(name='snoepjes')]
-}
 
 
 class CsvFile(Storage):
@@ -24,8 +18,8 @@ class CsvFile(Storage):
         filepath = os.path.join(self.folder, f"{list_name}.csv")
         if os.path.exists(filepath):
             with open(filepath) as item_fp:
-                reader = DataclassReader(item_fp, Item)
-                return list(reader)
+                reader = DictReader(item_fp)
+                return list(Item(**row) for row in reader)
         else:
             return []
 

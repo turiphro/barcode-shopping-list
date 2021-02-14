@@ -1,11 +1,13 @@
 from supermarktconnector.ah import AHConnector
 
 from .resolver import BaseResolver
+from models.item import Item
 from exceptions.barcode_not_found_exception import BarcodeNotFoundException
 
 
 COMMANDS = {
     "list": "LIST",         # for listing list contents
+    "add": "ADD",           # for adding products to a list
     "remove": "REMOVE",     # for removing products from a list
 }
 
@@ -21,11 +23,12 @@ class CommandResolver(BaseResolver):
     def __init__(self):
         self.database = None
 
-    def resolve(self, barcode: str):
+    def resolve(self, barcode: str) -> (BaseResolver.RESULT_TYPES, Item):
+
         # TODO: get from DB
 
         if barcode in COMMANDS:
             name = COMMANDS[barcode]
-            return self.RESULT_TYPES.COMMAND.name, name, {}
+            return self.RESULT_TYPES.COMMAND.name, Item(name=name)
         else:
             raise BarcodeNotFoundException("No known command called {}".format(barcode))

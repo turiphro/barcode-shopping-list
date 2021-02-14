@@ -8,7 +8,6 @@ verify_ssl = true
 [packages]
 requests = "*"
 flask = "*"
-dataclass-csv = "*"
 supermarktconnector = "*"
 gunicorn = "*"
 

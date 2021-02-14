@@ -1,4 +1,5 @@
 import logging
+import traceback
 from flask import Flask, request, jsonify, abort
 from werkzeug.exceptions import HTTPException
 import dataclasses
@@ -41,7 +42,8 @@ def create_api():
     @api.route('/api/lists/<list_id>', methods=['POST'])
     def add_item(list_id):
         """Adding item to list. Expected fields: name, description (opt), info (opt, dict), quantity (opt, int)"""
-        new_item = Item(**request.json)
+        data = request.json
+        new_item = Item(**data)
         storage.add_item(list_id, new_item)
         list_data = storage.get(list_id)
         return jsonify(list=list(map(dataclasses.asdict, list_data)))
@@ -56,16 +58,17 @@ def create_api():
     def lookup_barcode(barcode):
         for resolver in RESOLVERS:
             try:
-                result_type, name, info = resolver.resolve(barcode)
+                result_type, item = resolver.resolve(barcode)
 
                 return jsonify(
                     type=result_type,
-                    name=name,
-                    info=info
+                    name=item.name,
+                    description=item.description,
+                    info=item.info
                 )
             except Exception as e:
                 print("! cannot resolve barcode {}: {}".format(barcode, e))
-                print(e)
+                traceback.print_exc()
                 # TODO throw 404 or 500
         # failed, so show 404
         abort(404, "Barcode couldn't be resolved.")
