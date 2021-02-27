@@ -23,9 +23,9 @@
             class GroceriesApp extends React.Component {
                 getBaseURL() {
                     if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
-                        return "http://localhost:7000";
+                        return "http://localhost:7000"; // dev
                     } else {
-                        return "http://api.groc.turiphro.nl";
+                        return "http://" + location.hostname; // production
                     }
 
                 }
@@ -42,6 +42,7 @@
                     };
 
                     this.loopFetchList = this.loopFetchList.bind(this);
+                    this.handleKeyDown = this.handleKeyDown.bind(this);
                 }
 
                 setList(list) {
@@ -93,6 +94,29 @@
                     }
                 }
 
+                handleKeyDown(e) {
+                    if (e.key === 'Enter') {
+                        let name = e.target.value;
+                        let body = {name: name};
+
+                        console.log("adding " + name);
+
+                        this.setState({refreshing: true}, () => {
+                            fetch(this.state.API_URL + "lists/" + this.state.list_name, {
+                                method: 'POST',
+                                body: JSON.stringify(body)
+                            })
+                            .then(res => res.json())
+                            .then((data) => {
+                                console.log("NEW LIST", data.list);
+                                this.setList(data.list);
+                                e.target.value = "";
+                            })
+                            .catch(console.log)
+                        });
+                    }
+                }
+
                 render() {
                     return (
                         <div style={{border:"1px solid #ccc", maxWidth: "20em", padding: "1em"}}>
@@ -108,6 +132,13 @@
                                     <a href={'#'} style={{color: "red", float: "right"}} onClick={() => this.handleRemoveItem(item.name)}>x</a>
                                 </div>
                             )}
+
+                           <br/>
+
+                           <label>
+                               <span style={{color: "grey"}}>Add:</span>&nbsp;
+                               <input type="text" name="title" onKeyDown={this.handleKeyDown}/>
+                           </label>
 
                             <div style={{color: "#bbb", fontStyle: "italic", fontSize: "80%", float: "right"}}>
                             {this.state.refreshing &&
