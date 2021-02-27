@@ -1,0 +1,132 @@
+<html>
+    <head>
+        <title>Barcode groceries web</title>
+    </head>
+
+    <body>
+
+        <div id="groceries_container"></div>
+
+        <!-- Load React. -->
+        <!-- Note: when deploying, replace "development.js" with "production.min.js". -->
+        <script src="https://unpkg.com/react@17/umd/react.development.js" crossorigin></script>
+        <script src="https://unpkg.com/react-dom@17/umd/react-dom.development.js" crossorigin></script>
+        <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+        <script type="text/babel">
+            // NOTE: with Babel, we cannot load separate js(x) files if we're testing locally
+            // (without server) due to CORS issues (Babel loads via HTTP requests); hence, we
+            // include the code here inline, for now
+
+            'use strict';
+
+            class GroceriesApp extends React.Component {
+                getBaseURL() {
+                    if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+                        return "http://localhost:7000";
+                    } else {
+                        return "http://api.groc.turiphro.nl";
+                    }
+
+                }
+
+                constructor(props) {
+                    super(props);
+                    this.state = { 
+                        refreshing: false,
+                        refreshDelay: 5000,
+                        refreshed: new Date(),
+                        API_URL: this.getBaseURL() + "/api/",
+                        list_name: "groc",
+                        list: []
+                    };
+
+                    this.loopFetchList = this.loopFetchList.bind(this);
+                }
+
+                setList(list) {
+                    this.setState({
+                        list: list || [],
+                        refreshing: false,
+                        refreshed: new Date()
+                    });
+                }
+
+                componentDidMount() {
+                    this.loopFetchList();
+                }
+
+                loopFetchList() {
+                    this.fetchList();
+                    setTimeout(this.loopFetchList, this.state.refreshDelay);
+                }
+
+                fetchList() {
+                    this.setState({refreshing: true}, () => {
+                        fetch(this.state.API_URL + "lists/" + this.state.list_name)
+                        .then(res => res.json())
+                        .then((data) => {
+                            console.log("FETCHED LIST", data.list);
+                            this.setList(data.list);
+                        })
+                        .catch(console.log)
+                    });
+                }
+
+                removeItem(item_name) {
+                    console.log("removing " + item_name);
+
+                    this.setState({refreshing: true}, () => {
+                        fetch(this.state.API_URL + "lists/" + this.state.list_name + "/" + item_name, {method: 'DELETE'})
+                        .then(res => res.json())
+                        .then((data) => {
+                            console.log("NEW LIST", data.list);
+                            this.setList(data.list);
+                        })
+                        .catch(console.log)
+                    });
+                }
+
+                handleRemoveItem(item_name) {
+                    if (confirm("Remove " + item_name + " from the list?")) {
+                        this.removeItem(item_name);
+                    }
+                }
+
+                render() {
+                    return (
+                        <div style={{border:"1px solid #ccc", maxWidth: "20em", padding: "1em"}}>
+                            <b>{this.state.list_name}</b><br/><br/>
+
+                            {this.state.list.map((item, id) => 
+                                <div key={id}>
+                                    <span style={{color: "grey"}}>{item.quantity}</span>&nbsp;
+                                    {item.name}
+                                    &nbsp;-&nbsp;
+                                    <span style={{color: "grey"}}>{item.description}</span>
+
+                                    <a href={'#'} style={{color: "red", float: "right"}} onClick={() => this.handleRemoveItem(item.name)}>x</a>
+                                </div>
+                            )}
+
+                            <div style={{color: "#bbb", fontStyle: "italic", fontSize: "80%", float: "right"}}>
+                            {this.state.refreshing &&
+                                <span>Refreshing..</span>
+                            }
+                            {!this.state.refreshing &&
+                                <span>Refreshed {this.state.refreshed.toLocaleString("sv-SE")}</span>
+                            }
+                            </div>
+                        </div>
+                    );
+                }
+            }
+
+            // manually call React render
+            const domContainer = document.querySelector('#groceries_container');
+            ReactDOM.render(<GroceriesApp/>, domContainer);
+
+        </script>
+    </body>
+
+</html>
