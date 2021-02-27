@@ -30,7 +30,7 @@ Instructions for a raspberry pi with LCD screen:
     # 3. sudo apt update && sudo apt install git python3-pip
     # 3. Checkout this repo in $HOME;
     #    might want to `ssh-keygen` and add the key to github first;
-    #    git clone https://git@github.com/turiphro/barcode-shopping-list
+    #    git clone ssh://git@github.com/turiphro/barcode-shopping-list
     # 4. Configure LCD screen:
     #    ./install_rpi.sh
 

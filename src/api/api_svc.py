@@ -1,6 +1,7 @@
 import logging
 import traceback
 from flask import Flask, request, jsonify, abort
+from flask_cors import CORS
 from werkzeug.exceptions import HTTPException
 import dataclasses
 
@@ -20,6 +21,7 @@ RESOLVERS = [AlbertHeijnResolver(), CommandResolver()]
 def create_api():
     api = Flask(__name__)
     api.config["DEBUG"] = True
+    CORS(api) # enable all origins
 
     storage: Storage = CsvFile(CSV_STORAGE)
 
@@ -64,6 +66,7 @@ def create_api():
                     type=result_type,
                     name=item.name,
                     description=item.description,
+                    barcode=barcode,
                     info=item.info
                 )
             except Exception as e:

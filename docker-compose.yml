@@ -7,9 +7,12 @@ services:
     volumes:
       - ./src/api:/app        # debug
       - ./lists/:/app/lists   # persistent storage
+    restart: always
+
   web:
     image: halverneus/static-file-server
     volumes:
       - ./src/web/static/:/web
     ports:
       - "7001:8080"
+    restart: always

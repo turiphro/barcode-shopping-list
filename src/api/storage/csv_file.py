@@ -25,6 +25,12 @@ class CsvFile(Storage):
 
     def __save_list__(self, list_name: str, items: List[Item]):
         filepath = os.path.join(self.folder, f"{list_name}.csv")
+
+        if len(items) == 0:
+            if os.path.exists(filepath):
+                os.remove(filepath)  # remove file if there are no items
+            return
+
         fieldnames = asdict(items[0]).keys()
         with open(filepath, "w") as item_fp:
             writer = DictWriter(item_fp, fieldnames=fieldnames)

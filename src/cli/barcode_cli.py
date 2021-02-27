@@ -20,7 +20,7 @@ COMMANDS = Enum("COMMANDS", "ADD REMOVE LIST")
 
 @click.command()
 @click.option('--hostname', default='localhost', help='Hostname of the API')
-@click.option('--port', default=5000, help='Port of the API')
+@click.option('--port', default=7000, help='Port of the API')
 @click.option('--listname', default='groc', help='List identifier')
 @click.option('--width', default=30, help='Screen width (for the list width)')
 def barcode_cli(hostname, port, listname, width):
@@ -94,6 +94,7 @@ def get_next_barcode(command, hostname, port):
     barcode_item = {
         "name": payload.get('name'),
         "description": payload.get('description'),
+        "barcode": payload.get('barcode'),
         "info": json.dumps(payload)
     }
     click.echo(click.style(barcode_type, fg="green") + ": " + click.style(barcode_item["name"], fg="yellow", bold=True))
