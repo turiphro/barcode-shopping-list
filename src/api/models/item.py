@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 from typing import Union
 import json
 
@@ -17,7 +17,13 @@ class Item:
         self.description = description
         self.quantity = quantity
         self.barcode = barcode
-        self.info = info if isinstance(info, dict) else json.dumps(info)
+        self.info = info if isinstance(info, dict) else json.loads(info or "{}")
 
         if unknown:
             print("[note] ignoring unknown keywords", unknown.keys())
+
+    def asdict(self):
+        d = asdict(self)
+        d['info'] = json.dumps(self.info or "{}")
+        return d
+

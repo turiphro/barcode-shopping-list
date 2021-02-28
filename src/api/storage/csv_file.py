@@ -1,6 +1,5 @@
 import os
 from csv import DictReader, DictWriter
-from dataclasses import asdict
 from typing import List
 
 from .storage import Storage
@@ -31,12 +30,12 @@ class CsvFile(Storage):
                 os.remove(filepath)  # remove file if there are no items
             return
 
-        fieldnames = asdict(items[0]).keys()
+        fieldnames = items[0].asdict().keys()
         with open(filepath, "w") as item_fp:
             writer = DictWriter(item_fp, fieldnames=fieldnames)
             writer.writeheader()
             for item in items:
-                writer.writerow(asdict(item))
+                writer.writerow(item.asdict())
 
     def get(self, list_name: str) -> List[Item]:
         return self.__get_list_items__(list_name)

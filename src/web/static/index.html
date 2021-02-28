@@ -104,7 +104,10 @@
                         this.setState({refreshing: true}, () => {
                             fetch(this.state.API_URL + "lists/" + this.state.list_name, {
                                 method: 'POST',
-                                body: JSON.stringify(body)
+                                body: JSON.stringify(body),
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                }
                             })
                             .then(res => res.json())
                             .then((data) => {

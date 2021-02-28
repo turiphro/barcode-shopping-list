@@ -47,7 +47,7 @@ def barcode_cli(hostname, port, listname, width):
             listname = payload
 
         else:
-            print("SENDING", command, payload)
+            #print("SENDING", command, payload)
             execute_action(command, payload, hostname, port, listname)
 
 
@@ -95,7 +95,7 @@ def get_next_barcode(command, hostname, port):
         "name": payload.get('name'),
         "description": payload.get('description'),
         "barcode": payload.get('barcode'),
-        "info": json.dumps(payload)
+        "info": payload.get('info')
     }
     click.echo(click.style(barcode_type, fg="green") + ": " + click.style(barcode_item["name"], fg="yellow", bold=True))
 
@@ -112,7 +112,7 @@ def execute_action(command, payload, hostname, port, listname):
         name = payload.get('name')
         requests.delete(api_url(hostname, port, f"lists/{listname}/{name}"))
     else:
-        print("TODO unknown command:", command)
+        print("unknown command:", command)
 
 
 if __name__ == "__main__":
