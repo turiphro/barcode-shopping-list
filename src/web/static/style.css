@@ -1,0 +1,22 @@
+#groceries_container {
+    margin: auto;
+    padding: 5px;
+    border: 1px solid #ccc;
+    max-width: 500px;
+}
+
+hr {
+    border: 1px dashed #ccc;
+}
+
+.name {
+    color: orange;
+}
+
+.description {
+    color: grey;
+}
+
+.quantity {
+    color: #ccc;
+}

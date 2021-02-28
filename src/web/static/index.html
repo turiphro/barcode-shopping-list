@@ -1,6 +1,9 @@
 <html>
     <head>
         <title>Barcode groceries web</title>
+
+        <link rel="stylesheet" href="style.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
 
     <body>
@@ -99,38 +102,41 @@
                         let name = e.target.value;
                         let body = {name: name};
 
-                        console.log("adding " + name);
+                        if (name) {
 
-                        this.setState({refreshing: true}, () => {
-                            fetch(this.state.API_URL + "lists/" + this.state.list_name, {
-                                method: 'POST',
-                                body: JSON.stringify(body),
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                }
-                            })
-                            .then(res => res.json())
-                            .then((data) => {
-                                console.log("NEW LIST", data.list);
-                                this.setList(data.list);
-                                e.target.value = "";
-                            })
-                            .catch(console.log)
-                        });
+                            console.log("adding " + name);
+
+                            this.setState({refreshing: true}, () => {
+                                fetch(this.state.API_URL + "lists/" + this.state.list_name, {
+                                    method: 'POST',
+                                    body: JSON.stringify(body),
+                                    headers: {
+                                        'Content-Type': 'application/json'
+                                    }
+                                })
+                                .then(res => res.json())
+                                .then((data) => {
+                                    console.log("NEW LIST", data.list);
+                                    this.setList(data.list);
+                                    e.target.value = "";
+                                })
+                                .catch(console.log)
+                            });
+                        }
                     }
                 }
 
                 render() {
                     return (
-                        <div style={{border:"1px solid #ccc", maxWidth: "20em", padding: "1em"}}>
-                            <b>{this.state.list_name}</b><br/><br/>
+                        <div>
+                            <b>{this.state.list_name}</b><hr/>
 
                             {this.state.list.map((item, id) => 
                                 <div key={id}>
-                                    <span style={{color: "grey"}}>{item.quantity}</span>&nbsp;
-                                    {item.name}
+                                    <span class="quantity">{item.quantity}x</span>&nbsp;
+                                    <span class="name">{item.name}</span>
                                     &nbsp;-&nbsp;
-                                    <span style={{color: "grey"}}>{item.description}</span>
+                                    <span class="description">{item.description}</span>
 
                                     <a href={'#'} style={{color: "red", float: "right"}} onClick={() => this.handleRemoveItem(item.name)}>x</a>
                                 </div>
@@ -151,6 +157,10 @@
                                 <span>Refreshed {this.state.refreshed.toLocaleString("sv-SE")}</span>
                             }
                             </div>
+
+                           <br/>
+                           &nbsp;
+
                         </div>
                     );
                 }
