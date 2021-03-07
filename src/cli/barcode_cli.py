@@ -2,6 +2,7 @@
 import json
 import click
 import requests
+from slugify import slugify
 from enum import Enum
 
 
@@ -106,11 +107,10 @@ def execute_action(command, payload, hostname, port, listname):
     if command == COMMANDS.ADD.name:
         requests.post(api_url(hostname, port, f"lists/{listname}"), json=payload)
     elif command == COMMANDS.REMOVE.name:
-        name = payload.get('name')
-        requests.delete(api_url(hostname, port, f"lists/{listname}/{name}"))
+        item_id = slugify(payload.get('name') + " " + payload.get('description', ''))
+        requests.delete(api_url(hostname, port, f"lists/{listname}/{item_id}"))
     elif command == COMMANDS.LIST.name:
-        name = payload.get('name')
-        requests.delete(api_url(hostname, port, f"lists/{listname}/{name}"))
+        pass # nothing to do; refreshes next time
     else:
         print("unknown command:", command)
 

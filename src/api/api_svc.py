@@ -50,9 +50,9 @@ def create_api():
         list_data = storage.get(list_id)
         return jsonify(list=list(map(dataclasses.asdict, list_data)))
 
-    @api.route('/api/lists/<list_id>/<item_name>', methods=['DELETE'])
-    def remove_item(list_id, item_name):
-        storage.remove_item(list_id, item_name)
+    @api.route('/api/lists/<list_id>/<item_id>', methods=['DELETE'])
+    def remove_item(list_id, item_id):
+        storage.remove_item(list_id, item_id)
         list_data = storage.get(list_id)
         return jsonify(list=list(map(dataclasses.asdict, list_data)))
 

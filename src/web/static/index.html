@@ -77,11 +77,11 @@
                     });
                 }
 
-                removeItem(item_name) {
-                    console.log("removing " + item_name);
+                removeItem(item_id) {
+                    console.log("removing " + item_id);
 
                     this.setState({refreshing: true}, () => {
-                        fetch(this.state.API_URL + "lists/" + this.state.list_name + "/" + item_name, {method: 'DELETE'})
+                        fetch(this.state.API_URL + "lists/" + this.state.list_name + "/" + item_id, {method: 'DELETE'})
                         .then(res => res.json())
                         .then((data) => {
                             console.log("NEW LIST", data.list);
@@ -91,9 +91,9 @@
                     });
                 }
 
-                handleRemoveItem(item_name) {
-                    if (confirm("Remove " + item_name + " from the list?")) {
-                        this.removeItem(item_name);
+                handleRemoveItem(item_id) {
+                    if (confirm("Remove " + item_id + " from the list?")) {
+                        this.removeItem(item_id);
                     }
                 }
 
@@ -138,7 +138,7 @@
                                     &nbsp;-&nbsp;
                                     <span class="description">{item.description}</span>
 
-                                    <a href={'#'} style={{color: "red", float: "right"}} onClick={() => this.handleRemoveItem(item.name)}>x</a>
+                                    <a href={'#'} style={{color: "red", float: "right"}} onClick={() => this.handleRemoveItem(item.id)}>x</a>
                                 </div>
                             )}
 

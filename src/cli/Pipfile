@@ -9,6 +9,7 @@ verify_ssl = true
 requests = "*"
 click = "*"
 colorama = "*"
+python-slugify = "*"
 
 [requires]
 python_version = "3.7"

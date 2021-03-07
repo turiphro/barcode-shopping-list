@@ -45,10 +45,10 @@ class CsvFile(Storage):
         items.append(item)
         self.__save_list__(list_name, items)
 
-    def remove_item(self, list_name: str, name: str):
+    def remove_item(self, list_name: str, list_id: str):
         items = self.__get_list_items__(list_name)
         for item in items:
-            if item.name == name:
+            if item.id == list_id:
                 items.remove(item)
                 break
         self.__save_list__(list_name, items)

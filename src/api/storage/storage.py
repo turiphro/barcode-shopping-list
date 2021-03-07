@@ -14,6 +14,6 @@ class Storage(ABC):
         pass
 
     @abstractmethod
-    def remove_item(self, list_name: str, name: str):
+    def remove_item(self, list_name: str, item_id: str):
         """Removing first occurrence that matches"""
         pass
