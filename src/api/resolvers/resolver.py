@@ -11,3 +11,7 @@ class BaseResolver(ABC):
     @abstractmethod
     def resolve(self, barcode: str) -> (RESULT_TYPES, Item):
         pass
+
+    def name(self) -> str:
+        """Returns the name of the resolver class"""
+        return self.__class__.__name__

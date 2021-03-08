@@ -22,7 +22,7 @@ class Item:
         self.id = id or slugify(name + " " + description)
         self.name = name
         self.description = description
-        self.quantity = quantity
+        self.quantity = int(quantity)
         self.barcode = barcode
         self.resolver = resolver
         self.info = info if isinstance(info, dict) else json.loads(info or "{}")
@@ -33,6 +33,6 @@ class Item:
 
     def asdict(self):
         d = asdict(self)
-        d['info'] = json.dumps(self.info or "{}")
+        d['info'] = json.dumps(self.info or {})
         return d
 

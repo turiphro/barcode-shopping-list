@@ -92,12 +92,8 @@ def get_next_barcode(command, hostname, port):
         return None, None
 
     barcode_type = payload.get('type', 'ERROR')
-    barcode_item = {
-        "name": payload.get('name'),
-        "description": payload.get('description'),
-        "barcode": payload.get('barcode'),
-        "info": payload.get('info')
-    }
+    barcode_item = {field: payload.get(field)
+                    for field in ["name", "description", "barcode", "resolver", "info"]}
     click.echo(click.style(barcode_type, fg="green") + ": " + click.style(barcode_item["name"], fg="yellow", bold=True))
 
     return barcode_type, barcode_item

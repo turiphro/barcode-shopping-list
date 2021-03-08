@@ -8,7 +8,8 @@ from models.item import Item
 
 class CsvFile(Storage):
     # Note: this is a naive implementation, without
-    # taking care of race conditions (read/write locks etc)
+    # taking care of concurrency race conditions (read/write locks etc)
+    # or building efficient indices
 
     def __init__(self, folder: str):
         self.folder = folder
@@ -40,9 +41,21 @@ class CsvFile(Storage):
     def get(self, list_name: str) -> List[Item]:
         return self.__get_list_items__(list_name)
 
-    def add_item(self, list_name: str, item: Item):
+    def add_item(self, list_name: str, item: Item, merge: bool = True):
         items = self.__get_list_items__(list_name)
-        items.append(item)
+
+        print("adding item", item)
+        merged = False
+        if merge:
+            for existing in items:
+                if existing.id == item.id:  # merge
+                    existing.quantity += item.quantity
+                    merged = True
+                    break
+
+        if not merged:
+            items.append(item)
+
         self.__save_list__(list_name, items)
 
     def remove_item(self, list_name: str, list_id: str):
