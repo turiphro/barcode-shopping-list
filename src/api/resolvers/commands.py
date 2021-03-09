@@ -6,9 +6,14 @@ from exceptions.barcode_not_found_exception import BarcodeNotFoundException
 
 
 COMMANDS = {
-    "list": "LIST",         # for listing list contents
-    "add": "ADD",           # for adding products to a list
-    "remove": "REMOVE",     # for removing products from a list
+    "list": "LIST",             # for changing and displaying the list
+    "refresh": "REFRESH",       # for refreshing the list
+    "add": "ADD",               # for adding products to a list
+    "remove": "REMOVE",         # for removing products from a list
+    "1x": "1X", "2x": "2X", "3x": "3X", "4x": "4X",     # quantities
+    "exit": "EXIT",             # exit application
+    "shutdown": "SHUTDOWN",     # device shutdown
+    "update": "UPDATE",         # update application
 }
 
 

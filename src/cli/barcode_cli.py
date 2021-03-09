@@ -1,102 +1,101 @@
 #!/usr/bin/env python3
-import json
 import click
 import requests
+import os
+import sys
 from slugify import slugify
 from enum import Enum
+from typing import List, Dict
 
 
-def api_url(hostname, port, path):
-    return f"http://{hostname}:{port}/api/{path}"
-
-
-def padding(s: str, width: int, char=' '):
-    if len(s) > width:
-        return s[:width]
-    else:
-        return s + char * (width - len(s))
-
-
-COMMANDS = Enum("COMMANDS", "ADD REMOVE LIST")
+COMMANDS = Enum("COMMANDS", "ADD REMOVE LIST REFRESH EXIT SHUTDOWN UPDATE")
 
 @click.command()
 @click.option('--hostname', default='localhost', help='Hostname of the API')
 @click.option('--port', default=7000, help='Port of the API')
 @click.option('--listname', default='groc', help='List identifier')
-@click.option('--width', default=30, help='Screen width (for the list width)')
+@click.option('--width', default=40, help='Screen width (for the list width)')
 def barcode_cli(hostname, port, listname, width):
     while True:
-        # Show current list
+        # Fetch and show current list
         response = requests.get(api_url(hostname, port, f"lists/{listname}"))
         list = response.json()
+        print_list(listname, list, width)
 
-        click.echo()
-        click.echo(click.style(padding(f"=======[[ {listname} ]]===", width, "="), fg="white"))
-        for item in list.get("list"):
-            name = item.get("name")
-            qty = item.get("quantity")
-            click.echo(
-                click.style(f"{qty}x", fg="white") + " " +
-                click.style(padding(name, width - 3), fg="yellow")
-            )
-        click.echo(click.style(padding("=", width, "="), fg="white"))
-        click.echo()
+        # Process command line input
+        handler = InputHandler(hostname, port)
+        while not handler.finished:
+            handler.handle_next()
 
-        command, payload = process_command_input(hostname, port)
+        command, item = handler.get()
 
+        # Execute parsing result
         if command == COMMANDS.LIST.name:
-            listname = payload
-
+            listname = item.get("name")
+        elif command == COMMANDS.REFRESH.name:
+            pass  # simply refresh in next iteration
         else:
-            #print("SENDING", command, payload)
-            execute_action(command, payload, hostname, port, listname)
+            execute_action(command, item, hostname, port, listname)
 
 
-def process_command_input(hostname, port):
-    completed = False
-    command = COMMANDS.ADD.name
-    payload = None
+class InputHandler:
+    def __init__(self, hostname, port):
+        # config
+        self.hostname = hostname
+        self.port = port
 
-    while not completed:
-        barcode_type, barcode_item = get_next_barcode(command, hostname, port)
+        # processing vars
+        self.finished = False
+        self.quantity = 1
+
+        # outputs
+        self.command = COMMANDS.ADD.name
+        self.item = None
+
+    def handle_next(self):
+        barcode = click.prompt(
+            click.style(f"[{self.command}]", fg="blue") +
+            click.style(f"[{self.quantity}x]" if self.quantity > 1 else "", fg="cyan")
+        )
+
+        response = requests.get(api_url(self.hostname, self.port, f"lookup/{barcode}"))
+        payload = response.json()
+
+        if response.status_code == 404:
+            click.echo(click.style("NOT FOUND: " + payload.get("error"), fg="red"))
+            return
+        elif response.status_code >= 300:
+            click.echo(click.style("SERVER ERROR: " + payload.get("error"), fg="red"))
+            return
+
+        type = payload.get('type', 'ERROR')
+        item = {field: payload.get(field)
+                for field in ["name", "description", "barcode", "resolver", "info"]}
+        click.echo(
+            click.style(type, fg="green") + ": " + click.style(item["name"], fg="yellow", bold=True))
 
         # Process barcode
-        if barcode_type == "COMMAND":
-            command = barcode_item["name"]
+        if type == "PRODUCT":
+            self.item = item
+            self.finished = True
 
-            if command == COMMANDS.LIST.name:
-                payload = get_next_input(command)
-                completed = True
+        elif type == "COMMAND":
+            # Commands handled in this handler
+            if item["name"] in ["1X", "2X", "3X", "4X"]:
+                self.quantity = int(item["name"][:-1])
+            # Commands handled in main loop
+            elif item["name"] in ["EXIT", "SHUTDOWN", "UPDATE", "REFRESH"]:
+                self.command = item["name"]
+                self.finished = True
+            # Commands requiring further parsing
+            else:
+                self.command = item["name"]
+                self.quantity = 1
 
-        elif barcode_type == "PRODUCT":
-            payload = barcode_item
-            completed = True
-
-    return command, payload
-
-
-def get_next_input(command):
-    return click.prompt(click.style(f"[{command}]", fg="blue"))
-
-
-def get_next_barcode(command, hostname, port):
-    barcode = get_next_input(command)
-    response = requests.get(api_url(hostname, port, f"lookup/{barcode}"))
-    payload = response.json()
-
-    if response.status_code == 404:
-        click.echo(click.style("NOT FOUND: " + payload.get("error"), fg="red"))
-        return None, None
-    elif response.status_code >= 300:
-        click.echo(click.style("SERVER ERROR: " + payload.get("error"), fg="red"))
-        return None, None
-
-    barcode_type = payload.get('type', 'ERROR')
-    barcode_item = {field: payload.get(field)
-                    for field in ["name", "description", "barcode", "resolver", "info"]}
-    click.echo(click.style(barcode_type, fg="green") + ": " + click.style(barcode_item["name"], fg="yellow", bold=True))
-
-    return barcode_type, barcode_item
+    def get(self) -> (str, Dict):
+        if self.item and self.quantity > 1:
+            self.item["quantity"] = self.quantity
+        return self.command, self.item
 
 
 def execute_action(command, payload, hostname, port, listname):
@@ -105,10 +104,48 @@ def execute_action(command, payload, hostname, port, listname):
     elif command == COMMANDS.REMOVE.name:
         item_id = slugify(payload.get('name') + " " + payload.get('description', ''))
         requests.delete(api_url(hostname, port, f"lists/{listname}/{item_id}"))
-    elif command == COMMANDS.LIST.name:
-        pass # nothing to do; refreshes next time
+    elif command in [COMMANDS.LIST.name, COMMANDS.REFRESH.name]:
+        pass  # nothing to do; handled in main loop
+    elif command == COMMANDS.EXIT.name:
+        click.echo(click.style("Exiting.", fg="green"))
+        sys.exit(0)
+    elif command == COMMANDS.SHUTDOWN.name:
+        click.echo(click.style("Shutting down.", fg="green"))
+        os.system("shutdown -h now")
+    elif command == COMMANDS.UPDATE.name:
+        click.echo(click.style("Updating...", fg="green"))
+        os.system("git pull --rebase")
+        os.execv(sys.argv[0], sys.argv)  # restart itself
     else:
         print("unknown command:", command)
+
+
+def api_url(hostname, port, path):
+    return f"http://{hostname}:{port}/api/{path}"
+
+
+def print_list(listname: str, list: List[Dict], width: int):
+    click.echo()
+    click.echo(click.style(padding(f"=============[[ {listname} ]]===", width, "="), fg="white"))
+    for item in list.get("list"):
+        name = item.get("name")
+        description = item.get("description")
+        qty = item.get("quantity")
+        click.echo(
+            click.style(str(qty), fg="bright_white" if qty > 1 else None) + "x " +
+            click.style(name[:width], fg="yellow") +
+            padding(f" - {description}" if description else "",
+                    width - min(len(name), width) - 3)
+        )
+    click.echo(click.style(padding("=", width, "="), fg="white"))
+    click.echo()
+
+
+def padding(s: str, width: int, char=' '):
+    if len(s) > width:
+        return s[:width]
+    else:
+        return s + char * (width - len(s))
 
 
 if __name__ == "__main__":
