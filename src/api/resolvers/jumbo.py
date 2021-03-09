@@ -1,20 +1,20 @@
-from supermarktconnector.ah import AHConnector
+from supermarktconnector.jumbo import JumboConnector
 import requests
 
 from .resolver import BaseResolver
 from models.item import Item
-
+from exceptions.barcode_not_found_exception import BarcodeNotFoundException
 
 NON_RETRYABLE_CODES = [404]
 
 
-class AlbertHeijnResolver(BaseResolver):
+class JumboResolver(BaseResolver):
     def __init__(self):
         self.connector = None
         self.__reconnect__()
 
     def __reconnect__(self):
-        self.connector = AHConnector()
+        self.connector = JumboConnector()
 
     def resolve(self, barcode: str, retry: int = 1) -> (BaseResolver.RESULT_TYPES, Item):
         while retry >= 0:
@@ -34,11 +34,21 @@ class AlbertHeijnResolver(BaseResolver):
 
     def resolve_call(self, barcode: str, retry: int = 1) -> (BaseResolver.RESULT_TYPES, Item):
         info = self.connector.get_product_by_barcode(barcode)
-        print("[OK] AH API returned:", info)
 
-        item = Item(name=info.get('subCategory'),
-                    description=info.get("title"),
-                    info=info)
+        if not info:
+            raise BarcodeNotFoundException("Jumbo API returned no products")
+
+        print("[OK] Jumbo API returned:", info)
+
+        # more details can be obtained with a second call:
+        details = self.connector.get_product_details(info) \
+            .get('product', {}) \
+            .get('data')
+        print("details:", details)
+
+        item = Item(name=details.get('regulatedTitle') or info.get('title'),
+                    description=details.get('title'),
+                    info=details or info)
         print(f"[->] name={item.name}, description={item.description}")
 
         return self.RESULT_TYPES.PRODUCT.name, item

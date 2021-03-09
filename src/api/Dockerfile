@@ -15,5 +15,6 @@ RUN chmod +x ./gunicorn_starter.sh
 
 EXPOSE 5000
 ENV PORT=5000
+ENV PYTHONUNBUFFERED=TRUE
 
 ENTRYPOINT ["./gunicorn_starter.sh"]

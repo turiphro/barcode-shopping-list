@@ -6,6 +6,7 @@ from werkzeug.exceptions import HTTPException
 import dataclasses
 
 from resolvers.albert_heijn import AlbertHeijnResolver
+from resolvers.jumbo import JumboResolver
 from resolvers.plaintext import PlaintextResolver
 from resolvers.commands import CommandResolver
 from models.item import Item
@@ -16,7 +17,8 @@ from storage.csv_file import CsvFile
 logger = logging.getLogger(__name__)
 
 CSV_STORAGE = "/app/lists"
-RESOLVERS = [CommandResolver(), PlaintextResolver(), AlbertHeijnResolver()]
+RESOLVERS = [CommandResolver(), PlaintextResolver(), AlbertHeijnResolver(),
+             JumboResolver()]
 
 
 def create_api():
@@ -61,6 +63,7 @@ def create_api():
     def lookup_barcode(barcode):
         for resolver in RESOLVERS:
             try:
+                print("trying", resolver.name())
                 result_type, item = resolver.resolve(barcode)
 
                 return jsonify(
@@ -72,7 +75,7 @@ def create_api():
                     info=item.info
                 )
             except Exception as e:
-                print("! cannot resolve barcode {} in {}: {}".format(barcode, resolver.name(), e))
+                print("> cannot resolve barcode {} in {}: {}".format(barcode, resolver.name(), e))
                 traceback.print_exc()
         # failed, so show 404
         abort(404, "Barcode couldn't be resolved.")
