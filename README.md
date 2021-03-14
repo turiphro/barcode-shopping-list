@@ -15,6 +15,9 @@ Here's a professional design diagram:
              scanner            | (static React page)       |
                                 +---------------------------+
 
+## Demo
+
+[![Youtube preview](https://img.youtube.com/vi/31pYClpleRU/0.jpg)](https://www.youtube.com/watch?v=31pYClpleRU)
 
 ## Run API + WEB
 
