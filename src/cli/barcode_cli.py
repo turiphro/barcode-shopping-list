@@ -5,7 +5,7 @@ import os
 import sys
 from slugify import slugify
 from enum import Enum
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 
 COMMANDS = Enum("COMMANDS", "ADD REMOVE LIST REFRESH EXIT SHUTDOWN UPDATE")
@@ -19,8 +19,12 @@ def barcode_cli(hostname, port, listname, width):
     while True:
         # Fetch and show current list
         response = requests.get(api_url(hostname, port, f"lists/{listname}"))
-        list = response.json()
-        print_list(listname, list, width)
+        if response.status_code != 200:
+            click.echo(click.style(f"Invalid API response (code {response.status_code}):"\
+                                   f"\n{response.content[:200]}..", fg="red"))
+        else:
+            items = response.json()
+            print_list(listname, items, width)
 
         # Process command line input
         handler = InputHandler(hostname, port)
@@ -59,27 +63,28 @@ class InputHandler:
         )
 
         response = requests.get(api_url(self.hostname, self.port, f"lookup/{barcode}"))
-        payload = response.json()
 
         if response.status_code == 404:
-            click.echo(click.style("NOT FOUND: " + payload.get("error"), fg="red"))
+            click.echo(click.style("NOT FOUND: " + response.json().get("error"), fg="red"))
             return
         elif response.status_code >= 300:
-            click.echo(click.style("SERVER ERROR: " + payload.get("error"), fg="red"))
+            click.echo(click.style(
+                f"SERVER ERROR ({response.status_code}): {response.content[:200]}..", fg="red"))
             return
 
-        type = payload.get('type', 'ERROR')
+        payload = response.json()
+        barcode_type = payload.get('type', 'ERROR')
         item = {field: payload.get(field)
                 for field in ["name", "description", "barcode", "resolver", "info"]}
         click.echo(
-            click.style(type, fg="green") + ": " + click.style(item["name"], fg="yellow", bold=True))
+            click.style(barcode_type, fg="green") + ": " + click.style(item["name"], fg="yellow", bold=True))
 
         # Process barcode
-        if type == "PRODUCT":
+        if barcode_type == "PRODUCT":
             self.item = item
             self.finished = True
 
-        elif type == "COMMAND":
+        elif barcode_type == "COMMAND":
             # Commands handled in this handler
             if item["name"] in ["1X", "2X", "3X", "4X"]:
                 self.quantity = int(item["name"][:-1])
@@ -92,7 +97,7 @@ class InputHandler:
                 self.command = item["name"]
                 self.quantity = 1
 
-    def get(self) -> (str, Dict):
+    def get(self) -> Tuple[str, Dict]:
         if self.item and self.quantity > 1:
             self.item["quantity"] = self.quantity
         return self.command, self.item
