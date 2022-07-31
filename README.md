@@ -45,12 +45,12 @@ Or run with docker directly:
 
 Run:
 
-    python3 src/cli/barcode_cli.py [--hostname your.url.com --port 80]
+    python3 src/cli/barcode_cli.py [--hostname your.url.com --port 7000]
 
     OR:
 
     docker build -t barcodecli src/cli
-    docker run -it --rm -v $PWD/src/cli:/app barcodecli [--hostname your.url.com --port 80]
+    docker run -it --rm --net host -v $PWD/src/cli:/app barcodecli [--hostname your.url.com --port 7000]
 
 Instructions for installing a raspberry pi with LCD screen:
 
