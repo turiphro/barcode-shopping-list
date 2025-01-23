@@ -7,7 +7,7 @@ services:
     volumes:
       - ./src/api:/app        # debug
       - ./lists/:/app/lists   # persistent storage
-    restart: always
+    #restart: always  # constant checking might cause blocking IP address in AH API
 
   web:
     image: halverneus/static-file-server
@@ -16,3 +16,7 @@ services:
     ports:
       - "7001:8080"
     restart: always
+
+networks:
+  default:
+    driver: bridge

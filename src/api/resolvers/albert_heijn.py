@@ -1,4 +1,4 @@
-from supermarktconnector.ah import AHConnector
+from supermarktconnector import ah
 import requests
 
 from .resolver import BaseResolver
@@ -14,7 +14,12 @@ class AlbertHeijnResolver(BaseResolver):
         self.__reconnect__()
 
     def __reconnect__(self):
-        self.connector = AHConnector()
+        ah.HEADERS = {
+            'Host': 'api.ah.nl',
+            'content-type': 'application/json; charset=UTF-8',
+            'user-agent': 'HTTPie/3.2.2',
+        }
+        self.connector = ah.AHConnector()
 
     def resolve(self, barcode: str, retry: int = 1) -> (BaseResolver.RESULT_TYPES, Item):
         while retry >= 0:
