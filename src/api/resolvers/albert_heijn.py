@@ -14,11 +14,11 @@ class AlbertHeijnResolver(BaseResolver):
         self.__reconnect__()
 
     def __reconnect__(self):
-        ah.HEADERS = {
-            'Host': 'api.ah.nl',
-            'content-type': 'application/json; charset=UTF-8',
-            'user-agent': 'HTTPie/3.2.2',
-        }
+        #ah.HEADERS = {
+        #    'Host': 'api.ah.nl',
+        #    'content-type': 'application/json; charset=UTF-8',
+        #    'user-agent': 'HTTPie/3.2.2',
+        #}
         self.connector = ah.AHConnector()
 
     def resolve(self, barcode: str, retry: int = 1) -> (BaseResolver.RESULT_TYPES, Item):
@@ -31,6 +31,7 @@ class AlbertHeijnResolver(BaseResolver):
             except requests.exceptions.HTTPError as err:
                 # retry - incl reconnecting - on issues other than 'not found';
                 # by only reconnecting on connection issues, we greatly speed up most lookups
+                print("[ERR] Exception from the AH API:", err)
                 if any(str(err).startswith(str(status_code))
                        for status_code in NON_RETRYABLE_CODES):
                     raise err

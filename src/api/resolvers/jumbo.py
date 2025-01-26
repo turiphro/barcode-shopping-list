@@ -26,6 +26,7 @@ class JumboResolver(BaseResolver):
             except requests.exceptions.HTTPError as err:
                 # retry - incl reconnecting - on issues other than 'not found';
                 # by only reconnecting on connection issues, we greatly speed up most lookups
+                print("[ERR] Exception from the Jumbo API:", err)
                 if any(str(err).startswith(str(status_code))
                        for status_code in NON_RETRYABLE_CODES):
                     raise err
