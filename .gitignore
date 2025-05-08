@@ -1,4 +1,6 @@
 lists/
+# secrets:
+src/epaper/env.json
 
 
 # Byte-compiled / optimized / DLL files
